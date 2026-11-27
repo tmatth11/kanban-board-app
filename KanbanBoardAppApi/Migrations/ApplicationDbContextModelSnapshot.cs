@@ -16,7 +16,7 @@ partial class ApplicationDbContextModelSnapshot : ModelSnapshot
     // If you encounter a merge conflict in the line below, it means you need to
     // discard one of the migration branches and recreate its migrations on top of
     // the other branch. See https://aka.ms/efcore-docs-migrations-conflicts for more info.
-    public override string LastMigrationId => "20261126020216_InitialCreate";
+    public override string LastMigrationId => "20261127023912_AddModels";
 
     protected override void BuildModel(ModelBuilder modelBuilder)
     {
@@ -26,6 +26,128 @@ partial class ApplicationDbContextModelSnapshot : ModelSnapshot
             .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
         SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
+
+        modelBuilder.Entity("KanbanBoardAppApi.Models.Board", b =>
+            {
+                b.Property<Guid>("Id")
+                    .ValueGeneratedOnAdd()
+                    .HasColumnType("uniqueidentifier");
+
+                b.Property<DateTime>("CreatedAt")
+                    .HasColumnType("datetime2");
+
+                b.Property<string>("Description")
+                    .HasMaxLength(250)
+                    .HasColumnType("nvarchar(250)");
+
+                b.Property<string>("Name")
+                    .IsRequired()
+                    .HasMaxLength(75)
+                    .HasColumnType("nvarchar(75)");
+
+                b.Property<string>("UserId")
+                    .IsRequired()
+                    .HasColumnType("nvarchar(450)");
+
+                b.HasKey("Id");
+
+                b.HasIndex("UserId");
+
+                b.ToTable("Boards");
+            });
+
+        modelBuilder.Entity("KanbanBoardAppApi.Models.BoardTask", b =>
+            {
+                b.Property<Guid>("Id")
+                    .ValueGeneratedOnAdd()
+                    .HasColumnType("uniqueidentifier");
+
+                b.Property<Guid>("ColumnId")
+                    .HasColumnType("uniqueidentifier");
+
+                b.Property<DateTime>("CreatedAt")
+                    .HasColumnType("datetime2");
+
+                b.Property<string>("Description")
+                    .HasMaxLength(5000)
+                    .HasColumnType("nvarchar(max)");
+
+                b.Property<double>("Position")
+                    .HasColumnType("float");
+
+                b.Property<string>("Title")
+                    .IsRequired()
+                    .HasMaxLength(75)
+                    .HasColumnType("nvarchar(75)");
+
+                b.HasKey("Id");
+
+                b.HasIndex("ColumnId", "Position");
+
+                b.ToTable("BoardTasks");
+            });
+
+        modelBuilder.Entity("KanbanBoardAppApi.Models.Column", b =>
+            {
+                b.Property<Guid>("Id")
+                    .ValueGeneratedOnAdd()
+                    .HasColumnType("uniqueidentifier");
+
+                b.Property<Guid>("BoardId")
+                    .HasColumnType("uniqueidentifier");
+
+                b.Property<string>("Color")
+                    .IsRequired()
+                    .HasMaxLength(20)
+                    .HasColumnType("nvarchar(20)");
+
+                b.Property<DateTime>("CreatedAt")
+                    .HasColumnType("datetime2");
+
+                b.Property<string>("Name")
+                    .IsRequired()
+                    .HasMaxLength(75)
+                    .HasColumnType("nvarchar(75)");
+
+                b.Property<double>("Position")
+                    .HasColumnType("float");
+
+                b.HasKey("Id");
+
+                b.HasIndex("BoardId", "Position");
+
+                b.ToTable("Columns");
+            });
+
+        modelBuilder.Entity("KanbanBoardAppApi.Models.Subtask", b =>
+            {
+                b.Property<Guid>("Id")
+                    .ValueGeneratedOnAdd()
+                    .HasColumnType("uniqueidentifier");
+
+                b.Property<Guid>("BoardTaskId")
+                    .HasColumnType("uniqueidentifier");
+
+                b.Property<DateTime>("CreatedAt")
+                    .HasColumnType("datetime2");
+
+                b.Property<bool>("IsCompleted")
+                    .HasColumnType("bit");
+
+                b.Property<string>("Name")
+                    .IsRequired()
+                    .HasMaxLength(75)
+                    .HasColumnType("nvarchar(75)");
+
+                b.Property<double>("Position")
+                    .HasColumnType("float");
+
+                b.HasKey("Id");
+
+                b.HasIndex("BoardTaskId", "Position");
+
+                b.ToTable("Subtasks");
+            });
 
         modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRole", b =>
             {
@@ -225,6 +347,50 @@ partial class ApplicationDbContextModelSnapshot : ModelSnapshot
                 b.ToTable("AspNetUserTokens");
             });
 
+        modelBuilder.Entity("KanbanBoardAppApi.Models.Board", b =>
+            {
+                b.HasOne("Microsoft.AspNetCore.Identity.IdentityUser", "User")
+                    .WithMany()
+                    .HasForeignKey("UserId")
+                    .OnDelete(DeleteBehavior.Cascade)
+                    .IsRequired();
+
+                b.Navigation("User");
+            });
+
+        modelBuilder.Entity("KanbanBoardAppApi.Models.BoardTask", b =>
+            {
+                b.HasOne("KanbanBoardAppApi.Models.Column", "Column")
+                    .WithMany("BoardTasks")
+                    .HasForeignKey("ColumnId")
+                    .OnDelete(DeleteBehavior.Cascade)
+                    .IsRequired();
+
+                b.Navigation("Column");
+            });
+
+        modelBuilder.Entity("KanbanBoardAppApi.Models.Column", b =>
+            {
+                b.HasOne("KanbanBoardAppApi.Models.Board", "Board")
+                    .WithMany("Columns")
+                    .HasForeignKey("BoardId")
+                    .OnDelete(DeleteBehavior.Cascade)
+                    .IsRequired();
+
+                b.Navigation("Board");
+            });
+
+        modelBuilder.Entity("KanbanBoardAppApi.Models.Subtask", b =>
+            {
+                b.HasOne("KanbanBoardAppApi.Models.BoardTask", "BoardTask")
+                    .WithMany("Subtasks")
+                    .HasForeignKey("BoardTaskId")
+                    .OnDelete(DeleteBehavior.Cascade)
+                    .IsRequired();
+
+                b.Navigation("BoardTask");
+            });
+
         modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
             {
                 b.HasOne("Microsoft.AspNetCore.Identity.IdentityRole", null)
@@ -274,6 +440,21 @@ partial class ApplicationDbContextModelSnapshot : ModelSnapshot
                     .HasForeignKey("UserId")
                     .OnDelete(DeleteBehavior.Cascade)
                     .IsRequired();
+            });
+
+        modelBuilder.Entity("KanbanBoardAppApi.Models.Board", b =>
+            {
+                b.Navigation("Columns");
+            });
+
+        modelBuilder.Entity("KanbanBoardAppApi.Models.BoardTask", b =>
+            {
+                b.Navigation("Subtasks");
+            });
+
+        modelBuilder.Entity("KanbanBoardAppApi.Models.Column", b =>
+            {
+                b.Navigation("BoardTasks");
             });
 #pragma warning restore 612, 618
     }
